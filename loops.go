@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"os"
 )
 
 func echo(input *bufio.Scanner) {
@@ -20,6 +21,10 @@ func app(input *bufio.Scanner) {
 
 		fileHandle.append(line)
 	}
+}
+
+func quit(input *bufio.Scanner) {
+	os.Exit(0)
 }
 
 type Loop func(*bufio.Scanner)

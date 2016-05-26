@@ -46,6 +46,8 @@ func parseCommand(line []byte) (Loop, error) {
 		return app, nil
 	case line[0] == 'p':
 		return echo, nil
+	case line[0] == 'q':
+		return quit, nil
 	case line[0] == 'e':
 		return nil, errors.New("you intentionally errored")
 	}
