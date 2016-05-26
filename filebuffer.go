@@ -15,9 +15,18 @@ func NewFile() *file {
 }
 
 func (f *file) append(line []byte) {
-	// for _, l := range lines {
 	f.lines = append(f.lines, line)
-	// }
+}
+
+func (f *file) replace(index int, line []byte) {
+	switch {
+	case len(f.lines) < index:
+		return
+	case len(f.lines) == index:
+		f.append(line)
+	case len(f.lines) > index:
+		f.lines[index] = line
+	}
 }
 
 func (f *file) String() string {
