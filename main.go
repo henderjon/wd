@@ -2,49 +2,51 @@ package main
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"os"
 )
 
-var fh = NewFile()
+var (
+	fileHandle = NewFile()
+)
 
 func main() {
-	r := bufio.NewScanner(os.Stdin)
-	prompt()
-	for r.Scan() {
-		parseCommand(r.Bytes())
-		fmt.Println("```")
-		fmt.Println(fh.String())
-		fmt.Println("```")
-		prompt()
-	}
+	input := bufio.NewScanner(os.Stdin)
+	commandLoop(input)
 }
 
-func prompt(){
+func shouldCommand(line []byte) bool {
+	return line[0] == '.' && len(line) == 1
+}
+
+func commandLoop(input *bufio.Scanner) {
 	fmt.Printf(":")
-}
-
-func parseCommand(line []byte) {
-	if len(line) == 1 && line[0] == '.' {
-		prompt()
-		return
-	}
-	switch line[0] {
-	case 'a':
-		fmt.Println("a")
-		fh.append(line[1:])
-	case 'r':
-		fmt.Println("r")
-		fh.replace(2, line[1:])
-		// case 'b' :
-		// 	fmt.Println("b")
-		// case 'c' :
-		// 	fmt.Println("c")
+	for input.Scan() {
+		subloop, e := parseCommand(input.Bytes())
+		switch {
+		case e != nil:
+			fmt.Println(e)
+		case subloop != nil:
+			subloop(input)
+		default:
+		}
+		fmt.Printf(":")
 	}
 }
 
-func readInput(r bufio.Scanner){
-	for r.Scan() {
-		return
+func parseCommand(line []byte) (Loop, error) {
+	switch {
+	case shouldCommand(line):
+		fallthrough
+	default:
+		// return to the command loop
+		return nil, nil
+	case line[0] == 'a':
+		return app, nil
+	case line[0] == 'p':
+		return echo, nil
+	case line[0] == 'e':
+		return nil, errors.New("you intentionally errored")
 	}
 }
