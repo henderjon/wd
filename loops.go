@@ -6,16 +6,20 @@ import (
 	"os"
 )
 
-func echo(input *bufio.Scanner) {
-	fmt.Println(fileHandle.String())
+func echo(cmd []byte, input *bufio.Scanner) {
+
+	// lr, e := parseRange(cmd, fileHandle)
+	for k, v := range fileHandle.Lines() {
+		fmt.Printf("%6d\t%s\n", k, v)
+	}
 }
 
-func app(input *bufio.Scanner) {
+func appnd(cmd []byte, input *bufio.Scanner) {
 	for input.Scan() {
 
 		line := input.Bytes()
 
-		if shouldCommand(line) {
+		if loopback(line) {
 			return
 		}
 
@@ -23,8 +27,12 @@ func app(input *bufio.Scanner) {
 	}
 }
 
-func quit(input *bufio.Scanner) {
+func quit(cmd []byte, input *bufio.Scanner) {
 	os.Exit(0)
 }
 
-type Loop func(*bufio.Scanner)
+func save(cmd []byte, input *bufio.Scanner) {
+	fileHandle.Save()
+}
+
+type Loop func([]byte, *bufio.Scanner)

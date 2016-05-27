@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"io/ioutil"
 )
 
 type file struct {
@@ -29,6 +30,22 @@ func (f *file) replace(index int, line []byte) {
 	}
 }
 
-func (f *file) String() string {
-	return string(bytes.Join(f.lines, []byte{'\n'}))
+// func (f *file) String() string {
+// 	return string(bytes.Join(f.lines, []byte{'\n'}))
+// }
+
+// func (f *file) Bytes() [][]byte {
+// 	return f.lines
+// }
+
+func (f *file) Lines() [][]byte {
+	return f.lines
+}
+
+func (f *file) Len() int {
+	return len(f.lines)
+}
+
+func (f *file) Save() error {
+	return ioutil.WriteFile("tmp2.txt", bytes.Join(f.lines, []byte{'\n'}), 0644)
 }
