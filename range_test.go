@@ -28,9 +28,10 @@ func Test_Regex(t *testing.T) {
 		`2a`,
 		`,a`,
 		`2,a`,
+		`2a`,
 	}
 
-	expect = 4 // we should only have 3 captures (+ full string as 0)
+	expect = 5 // we should only have 3 captures (+ full string as 0)
 	for _, str = range examples {
 		matches = regex.FindAllStringSubmatch(str, -1)
 		if matches != nil {
@@ -56,6 +57,34 @@ func Test_Regex(t *testing.T) {
 		if matches != nil {
 			t.Error("match error: should be nil\n", str)
 		}
+	}
+
+}
+
+func Test_Command(t *testing.T) {
+	var (
+		c  string
+		ok bool
+	)
+
+	c, ok = parseCommand([]byte("a"))
+	if !ok || c != `a` {
+		t.Error("command error: unable to parse")
+	}
+
+	c, ok = parseCommand([]byte("12,34b"))
+	if !ok || c != `b` {
+		t.Error("command error: unable to parse")
+	}
+
+	c, ok = parseCommand([]byte(",34c"))
+	if !ok || c != `c` {
+		t.Error("command error: unable to parse")
+	}
+
+	c, ok = parseCommand([]byte(",$a"))
+	if !ok || c != `a` {
+		t.Error("command error: unable to parse")
 	}
 
 }

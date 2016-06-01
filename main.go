@@ -11,11 +11,12 @@ import (
 )
 
 const (
-	commandRegex = `^(?:(\d+)?(?:,?(\d+|\${1})?))?((?i)[a-z]{1})$`
+	commandRegex = `^(?:(\d+)?(?:(,)?(\d+|\${1})?))?((?i)[a-z]{1})$`
 )
 
 var (
-	fileHandle = NewFile()
+	fileHandle  = NewFile()
+	currentLine = 0
 )
 
 type lRange struct {
@@ -29,16 +30,16 @@ func main() {
 
 func loopback(line []byte) bool {
 	if len(line) < 1 {
-		return true
+		// return true
 	}
-	return line[0] == '.' && len(line) == 1
+	return len(line) == 1 && line[0] == '.'
 }
 
 func commandLoop(input *bufio.Scanner) {
 	fmt.Printf(":")
 	for input.Scan() {
 		cmd := input.Bytes()
-		subloop, e := parseCommand(cmd)
+		subloop, e := parseFullCommand(cmd)
 		switch {
 		case e != nil:
 			fmt.Println(e)
@@ -50,23 +51,43 @@ func commandLoop(input *bufio.Scanner) {
 	}
 }
 
-func parseCommand(line []byte) (Loop, error) {
-	switch {
-	case loopback(line):
+func parseFullCommand(line []byte) (Loop, error) {
+
+	if loopback(line) {
 		return nil, nil
-	case line[0] == 'a':
-		return appnd, nil
-	case line[0] == 'p':
+	}
+
+	c, ok := parseCommand(line)
+
+	switch {
+	case !ok:
+		return nil, nil
+	case c == `i`:
+		return insert, nil
+	case c == `a`:
+		return add, nil
+	case c == `p`:
 		return echo, nil
-	case line[0] == 'w':
+	case c == `w`:
 		return save, nil
-	case line[0] == 'q':
+	case c == `l`:
+		return setLine, nil
+	case c == `q`:
 		return quit, nil
-	case line[0] == 'e':
-		return nil, errors.New("you intentionally errored")
+	case c == `e`:
+		return nil, errors.New("? you intentionally errored")
 	default:
 		return nil, errors.New("? unrecognized command")
 	}
+}
+
+func parseCommand(cmd []byte) (string, bool) {
+	regex := regexp.MustCompile(commandRegex)
+	matches := regex.FindAllStringSubmatch(string(cmd), -1)
+	if matches == nil {
+		return "", false
+	}
+	return matches[0][4], true
 }
 
 func parseRange(cmd []byte, fh *file) (*lRange, error) {
@@ -76,7 +97,7 @@ func parseRange(cmd []byte, fh *file) (*lRange, error) {
 	regex := regexp.MustCompile(commandRegex)
 	matches := regex.FindAllStringSubmatch(string(cmd), -1)
 	if matches == nil {
-		return nil, errors.New("invalid command syntax")
+		return nil, errors.New("? invalid command syntax")
 	}
 
 	if matches[0][1] == "" {
@@ -88,10 +109,15 @@ func parseRange(cmd []byte, fh *file) (*lRange, error) {
 		}
 	}
 
-	if matches[0][2] == "" || matches[0][2] == "$" {
-		lRange.max = fileHandle.Len()
-	} else {
-		lRange.max, e = strconv.Atoi(matches[0][2])
+	switch {
+	case matches[0][2] == "": // was there a comma provided?
+		lRange.max = lRange.min
+	case matches[0][3] == "$":
+		lRange.max = fh.Len()
+	case matches[0][3] == "":
+		lRange.max = lRange.min
+	default:
+		lRange.max, e = strconv.Atoi(matches[0][3])
 		if e != nil {
 			return nil, e
 		}
@@ -102,9 +128,10 @@ func parseRange(cmd []byte, fh *file) (*lRange, error) {
 	}
 
 	if lRange.min > lRange.max {
-		return nil, errors.New("range error: min was greater than max")
+		return nil, errors.New("? range error: min was greater than max")
 	}
 
+	// currentLine = lRange.max
 	return lRange, nil
 
 }

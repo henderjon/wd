@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"io/ioutil"
+	// "log"
 )
 
 type file struct {
@@ -15,8 +16,19 @@ func NewFile() *file {
 	}
 }
 
-func (f *file) append(line []byte) {
-	f.lines = append(f.lines, line)
+func (f *file) append(lineNumber int, line []byte) {
+
+	var pre, post [][]byte
+
+	lineNumber -= 1
+
+	if  len(f.lines) >= lineNumber {
+		pre  = f.lines[:lineNumber]
+		post = f.lines[lineNumber:]
+	}
+
+	f.lines = append(pre, line)
+	f.lines = append(f.lines, post...)
 }
 
 func (f *file) replace(index int, line []byte) {
@@ -24,7 +36,7 @@ func (f *file) replace(index int, line []byte) {
 	case len(f.lines) < index:
 		return
 	case len(f.lines) == index:
-		f.append(line)
+		f.append(index, line)
 	case len(f.lines) > index:
 		f.lines[index] = line
 	}
